@@ -1,3 +1,4 @@
+import compass.{Code, One, Zero, bits_to_string, encode_string}
 import gleeunit
 
 pub fn main() -> Nil {
@@ -5,9 +6,19 @@ pub fn main() -> Nil {
 }
 
 // gleeunit test functions end in `_test`
-pub fn hello_world_test() {
-  let name = "Joe"
-  let greeting = "Hello, " <> name <> "!"
+pub fn first_test() {
+  let first =
+    Code(fn(chr: String) {
+      case chr {
+        "a" -> [Zero]
+        "b" -> [One, One]
+        "c" -> [Zero, One, Zero]
+        "d" -> [One, Zero, One]
+        _ -> []
+      }
+    })
 
-  assert greeting == "Hello, Joe!"
+  echo encode_string("adc", first) |> bits_to_string
+  echo encode_string("cda", first) |> bits_to_string
+  assert encode_string("adc", first) == encode_string("cda", first)
 }
