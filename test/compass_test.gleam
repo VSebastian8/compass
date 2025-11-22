@@ -1,4 +1,8 @@
-import compass.{Code, One, Zero, binary, bits_to_string, encode_string, unary}
+import compass.{
+  Code, One, Zero, binary, bits_to_string, clog, delta, encode_string, gamma,
+  log, pow, unary,
+}
+import gleam/list
 import gleeunit
 
 pub fn main() -> Nil {
@@ -35,4 +39,33 @@ pub fn unary_test() {
   assert unary(0) == [Zero]
   assert unary(12)
     == [One, One, One, One, One, One, One, One, One, One, One, One, Zero]
+}
+
+pub fn log_test() {
+  assert log(3) == 1
+  assert log(6) == 2
+  assert log(8) == 3
+  assert clog(3) == 2
+  assert clog(6) == 3
+  assert clog(8) == 3
+}
+
+pub fn pow_test() {
+  assert pow(2, 0) == 1
+  assert pow(2, 1) == 2
+  assert pow(2, 3) == 8
+}
+
+pub fn gamma_test() {
+  assert gamma(6) |> bits_to_string == "11011"
+  assert gamma(100) |> bits_to_string == "1111110100101"
+  assert gamma(400) |> bits_to_string == "11111111010010001"
+  assert gamma(400) |> list.length == 2 * log(401) + 1
+}
+
+pub fn delta_test() {
+  assert delta(6) |> bits_to_string == "10111"
+  assert delta(100) |> bits_to_string == "11011100101"
+  assert delta(400) |> bits_to_string == "111000110010001"
+  assert delta(400) |> list.length == clog(402) + 2 * log(clog(402))
 }

@@ -72,6 +72,44 @@ pub fn unary(n) -> List(Bit) {
   }
 }
 
+// floor(log2(n))
+pub fn log(n: Int) {
+  case n <= 1 {
+    True -> 0
+    False -> 1 + log(n / 2)
+  }
+}
+
+// ceil(log2(n))
+pub fn clog(n: Int) {
+  case n <= 1 {
+    True -> 0
+    False ->
+      case n % 2 == 0 {
+        True -> 1 + clog(n / 2)
+        False -> 1 + log(n)
+      }
+  }
+}
+
+// n ^ k
+pub fn pow(n, k) {
+  case k == 0 {
+    True -> 1
+    False -> n * pow(n, k - 1)
+  }
+}
+
+pub fn gamma(n: Int) -> List(Bit) {
+  let k = log(n + 1)
+  list.append(unary(k), binary(k, n - pow(2, k) + 1))
+}
+
+pub fn delta(n: Int) -> List(Bit) {
+  let k = log(n + 1)
+  list.append(gamma(k), binary(k, n - pow(2, k) + 1))
+}
+
 pub fn main() -> Nil {
   let same = Code(fn(b: Bit) { [flip(b)] })
   echo [Zero, One, Zero] |> encode(same) |> show()
