@@ -1,6 +1,9 @@
+import gleam/float
 import gleam/list
 import gleam/result
 import gleam/string
+import gleamy/pairing_heap
+import gleamy/priority_queue
 
 pub type Bit {
   Zero
@@ -192,11 +195,76 @@ pub fn delta() -> Code(Int) {
   )
 }
 
+fn hamming_while(
+  pq: pairing_heap.Heap(#(List(#(a, List(Bit))), Float)),
+) -> List(#(a, List(Bit))) {
+  case priority_queue.count(pq) {
+    1 -> {
+      case priority_queue.peek(pq) {
+        Ok(l) -> l.0
+        Error(_) -> panic
+      }
+    }
+    _ -> {
+      let #(el0, pq1) = case priority_queue.pop(pq) {
+        Ok(x) -> x
+        Error(_) -> panic
+      }
+      let #(el1, pq2) = case priority_queue.pop(pq1) {
+        Ok(x) -> x
+        Error(_) -> panic
+      }
+      let l0 = el0.0 |> list.map(fn(code) { #(code.0, [Zero, ..code.1]) })
+      let l1 = el1.0 |> list.map(fn(code) { #(code.0, [One, ..code.1]) })
+      let pq3 = priority_queue.push(pq2, #(list.append(l0, l1), el0.1 +. el1.1))
+      hamming_while(pq3)
+    }
+  }
+}
+
+fn hamming_enc(symbols: List(#(a, List(Bit)))) -> fn(a) -> List(Bit) {
+  fn(sym) {
+    case list.find(symbols, fn(p) { p.0 == sym }) {
+      Error(_) -> panic as "Symbol not found in code dictionary"
+      Ok(x) -> x.1
+    }
+  }
+}
+
+fn hamming_dec(
+  symbols: List(#(a, List(Bit))),
+  prefix: List(Bit),
+) -> fn(List(Bit)) -> #(a, List(Bit)) {
+  fn(msg) {
+    case msg {
+      [] -> panic as "Message should not be empty at this point"
+      [b, ..rest] -> {
+        let try_code = list.append(prefix, [b])
+        case list.find(symbols, fn(p) { p.1 == try_code }) {
+          Ok(x) -> #(x.0, rest)
+          Error(_) -> hamming_dec(symbols, try_code)(rest)
+        }
+      }
+    }
+  }
+}
+
+pub fn hamming_code(prob: List(#(a, Float))) -> Code(a) {
+  let pq =
+    priority_queue.from_list(
+      prob |> list.map(fn(p) { #([#(p.0, [])], p.1) }),
+      fn(p1, p2) { float.compare(p1.1, p2.1) },
+    )
+  let symbols = hamming_while(pq)
+  Code(encode: hamming_enc(symbols), decode: hamming_dec(symbols, []))
+}
+
 pub fn main() -> Nil {
   let same =
     Code(fn(b: Bit) { [flip(b)] }, decode: fn(bits) {
       #(flip(result.unwrap(list.first(bits), One)), list.drop(bits, 1))
     })
   echo [Zero, One, Zero] |> encode(same) |> show()
+
   Nil
 }

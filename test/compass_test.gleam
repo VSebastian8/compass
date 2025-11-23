@@ -1,9 +1,10 @@
 import compass.{
   Code, One, Zero, binary, clog, decode, delta, encode, encode_string, gamma,
-  log, pow, to_bits, to_string, unary,
+  hamming_code, log, pow, to_bits, to_string, unary,
 }
 import gleam/list
 import gleam/pair
+import gleam/string
 import gleeunit
 
 pub fn main() -> Nil {
@@ -92,4 +93,18 @@ pub fn delta_test() {
   assert "10111" |> to_bits |> delta().decode |> pair.first == 6
   assert "1101110010111100011001000110111" |> to_bits |> decode(delta())
     == [100, 400, 6]
+}
+
+pub fn hamming_test() {
+  let ham =
+    hamming_code([
+      #("c", 0.3),
+      #("a", 0.2),
+      #("o", 0.2),
+      #("n", 0.1),
+      #("u", 0.1),
+      #("y", 0.1),
+    ])
+  assert encode_string("cocoon", ham) |> decode(ham) |> string.join("")
+    == "cocoon"
 }
